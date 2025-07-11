@@ -48,7 +48,9 @@ contract DPSManager is ReentrancyGuard, Ownable {
     mapping(bytes32 => uint256[]) private s_userHashToDPS;
 
     // Events
-    event DPSRegistered(uint256 indexed dpsId, address indexed responsible, bytes32 indexed hashDPS, string dataDPS, uint256 timestamp);
+    event DPSRegistered(
+        uint256 indexed dpsId, address indexed responsible, bytes32 indexed hashDPS, string dataDPS, uint256 timestamp
+    );
     event DPSQueried(bytes32 indexed userHash, uint256 dpsCount);
     event MedicalAssetTokenSet(address indexed medicalAssetTokenAddress);
 
@@ -85,11 +87,16 @@ contract DPSManager is ReentrancyGuard, Ownable {
      * @param dependentHashes An array of unique keccak256 hashes for any dependents.
      * @param dataDPS The Base64 encoded JSON string representing the token's metadata.
      */
-    function registerDPS(bytes32 hashDPS, bytes32 responsibleHash, bytes32[] calldata dependentHashes, string calldata dataDPS) external nonReentrant onlyActiveUser {
+    function registerDPS(
+        bytes32 hashDPS,
+        bytes32 responsibleHash,
+        bytes32[] calldata dependentHashes,
+        string calldata dataDPS
+    ) external nonReentrant onlyActiveUser {
         if (address(s_medicalAssetToken) == address(0)) revert DPSManager__MedicalAssetTokenNotSet();
         uint256 dpsId = s_dpsCounter;
         s_dpsCounter++;
-        
+
         s_dpsRegistry[dpsId] = DPS({
             responsibleHash: responsibleHash,
             dependentHashes: dependentHashes,
@@ -134,7 +141,12 @@ contract DPSManager is ReentrancyGuard, Ownable {
      * @return dpsRecords An array of all associated DPS structs.
      * @return dpsDatas An array of corresponding token URIs (Base64 data).
      */
-    function queryDPS(bytes32 _userHash) external view onlyAuthorizedInsurance returns (DPS[] memory, string[] memory) {
+    function queryDPS(bytes32 _userHash)
+        external
+        view
+        onlyAuthorizedInsurance
+        returns (DPS[] memory, string[] memory)
+    {
         if (!_checkUserIsActive(_userHash)) revert DPSManager__UserNotActive();
         uint256[] storage dpsIds = s_userHashToDPS[_userHash];
         uint256 dpsCount = dpsIds.length;
@@ -198,7 +210,7 @@ contract DPSManager is ReentrancyGuard, Ownable {
      * @param _userHash The keccak256 hash of the user to check.
      * @return True if the user is active, false otherwise.
      */
-    function _checkUserIsActive(bytes32 _userHash) internal view returns (bool ) {
+    function _checkUserIsActive(bytes32 _userHash) internal view returns (bool) {
         address userAddress = i_userRegistry.getUserAddressByHash(_userHash);
         if (userAddress == address(0)) revert DPSManager__UserNotFound();
         return i_userRegistry.isUserActive(userAddress);

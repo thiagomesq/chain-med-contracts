@@ -74,7 +74,7 @@ contract ChainMedAutomationTest is Test {
     // ////////////////////////////////////
 
     function testCheckUpkeepReturnsFalseIfNoWorkNeeded() public view {
-        (bool upkeepNeeded, ) = chainMedAutomation.checkUpkeep("");
+        (bool upkeepNeeded,) = chainMedAutomation.checkUpkeep("");
         assertFalse(upkeepNeeded);
     }
 

@@ -41,7 +41,7 @@ contract ChainMed {
     error ChainMed__PatientNotRegistered();
     error ChainMed__PrescriptionNotFound();
     error ChainMed__ViewPrescriptionNotAuthorized();
-    error ChainMed__OnlyThePatientOwnerCanShare(); 
+    error ChainMed__OnlyThePatientOwnerCanShare();
 
     /*//////////////////////////////////////////////////////////////
                            TYPE DECLARATIONS
@@ -178,9 +178,9 @@ contract ChainMed {
         Prescription[] memory prescriptions = new Prescription[](totalPrescriptions);
         for (uint256 i = 0; i < totalPrescriptions; i++) {
             Prescription memory prescription = s_prescriptions[i];
-            if ((msg.sender == prescription.doctor || 
-                msg.sender == prescription.patient || 
-                isSharedWith(i, msg.sender)) && prescription.isValid
+            if (
+                (msg.sender == prescription.doctor || msg.sender == prescription.patient || isSharedWith(i, msg.sender))
+                    && prescription.isValid
             ) {
                 prescriptions[i] = prescription;
             }
@@ -188,6 +188,7 @@ contract ChainMed {
         return prescriptions;
     }
     // Get prescription details
+
     function getPrescription(uint256 _prescriptionId) external view returns (Prescription memory) {
         Prescription memory prescription = s_prescriptions[_prescriptionId];
         if (!prescription.isValid) {

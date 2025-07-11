@@ -8,8 +8,8 @@ pragma solidity ^0.8.26;
  * @dev This script deploys the ZKVerifier contract and verifies it on Etherscan
  */
 
-import { Script } from "forge-std/Script.sol";
-import { ZKVerifier } from "src/ZKVerifier.sol";
+import {Script} from "forge-std/Script.sol";
+import {ZKVerifier} from "src/ZKVerifier.sol";
 
 contract DeployZKVerifier is Script {
     function run() external returns (ZKVerifier) {

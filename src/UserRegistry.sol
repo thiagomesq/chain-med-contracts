@@ -31,7 +31,6 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
     error UserRegistry__AutomationNotSet();
     error UserRegistry__CallerNotAutomation();
 
-
     // Structs
     /**
      * @notice Represents a registered user in the system.
@@ -104,7 +103,7 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
     event QueryPerformed(address indexed insurance, address indexed queriedUser, string queryType);
     event DPSManagerContractSet(address indexed dpsManagerAddress);
     event AutomationContractSet(address indexed automationAddress);
-    
+
     /**
      * @notice Modifier to ensure a function is called only by the registered DPSManager contract.
      */
@@ -129,7 +128,10 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
      * @param _functionsRouter The address of the Chainlink Functions router.
      * @param _subscriptionId The ID of the Chainlink Functions subscription.
      */
-    constructor(uint32 _callbackGasLimit, address _functionsRouter, uint64 _subscriptionId, bytes32 _donId) Ownable(msg.sender) FunctionsClient(_functionsRouter) {
+    constructor(uint32 _callbackGasLimit, address _functionsRouter, uint64 _subscriptionId, bytes32 _donId)
+        Ownable(msg.sender)
+        FunctionsClient(_functionsRouter)
+    {
         i_callbackGasLimit = _callbackGasLimit;
         i_subscriptionId = _subscriptionId;
         i_donId = _donId;
@@ -147,12 +149,7 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
         if (s_users[msg.sender].active) revert UserRegistry__UserAlreadyRegistered();
         if (s_userHashToAddress[_userHash] != address(0)) revert UserRegistry__HashAlreadyUsed();
 
-        s_users[msg.sender] = User({
-            name: _name,
-            userHash: _userHash,
-            active: true,
-            registrationDate: block.timestamp
-        });
+        s_users[msg.sender] = User({name: _name, userHash: _userHash, active: true, registrationDate: block.timestamp});
         s_userHashToAddress[_userHash] = msg.sender;
         s_usersList.push(msg.sender);
         emit UserRegistered(msg.sender, _userHash, _name, block.timestamp);
@@ -167,7 +164,10 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
      * @param _cnpj The CNPJ to be verified.
      * @param _source The JavaScript source code for the Chainlink Functions request.
      */
-    function requestInsuranceAuthorization(string calldata _name, string calldata _cnpj, string calldata _source) external nonReentrant {
+    function requestInsuranceAuthorization(string calldata _name, string calldata _cnpj, string calldata _source)
+        external
+        nonReentrant
+    {
         if (bytes(_name).length == 0) revert UserRegistry__NameCannotBeEmpty();
         if (s_insurances[msg.sender].authorized) revert UserRegistry__InsuranceAlreadyAuthorized();
 
@@ -180,11 +180,8 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
         bytes32 requestId = _sendRequest(req.encodeCBOR(), i_subscriptionId, i_callbackGasLimit, i_donId);
 
         requestTypes[requestId] = RequestType.INSURANCE_AUTHORIZATION;
-        insuranceAuthRequests[requestId] = PendingInsuranceAuthorization({
-            insuranceAddress: msg.sender,
-            name: _name,
-            cnpj: _cnpj
-        });
+        insuranceAuthRequests[requestId] =
+            PendingInsuranceAuthorization({insuranceAddress: msg.sender, name: _name, cnpj: _cnpj});
         emit InsuranceVerificationRequested(requestId, msg.sender, _cnpj);
     }
 
@@ -216,12 +213,8 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
      */
     function _completeInsuranceAuthorization(bytes32 _requestId) private {
         PendingInsuranceAuthorization memory p = insuranceAuthRequests[_requestId];
-        s_insurances[p.insuranceAddress] = Insurance({
-            name: p.name,
-            cnpj: p.cnpj,
-            authorized: true,
-            registrationDate: block.timestamp
-        });
+        s_insurances[p.insuranceAddress] =
+            Insurance({name: p.name, cnpj: p.cnpj, authorized: true, registrationDate: block.timestamp});
         s_insurancesList.push(p.insuranceAddress);
         emit InsuranceAuthorized(p.insuranceAddress, p.name, p.cnpj, block.timestamp);
     }

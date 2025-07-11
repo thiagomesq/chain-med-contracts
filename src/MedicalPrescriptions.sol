@@ -167,7 +167,9 @@ contract MedicalPrescriptions {
         if (bytes(patientId).length == 0) revert MedicalPrescriptions__EmptyPatientId();
         if (bytes(medication).length == 0) revert MedicalPrescriptions__EmptyMedication();
         if (!patients[patientId].isRegistered) revert MedicalPrescriptions__PatientNotRegistered();
-        if (patients[patientId].walletAddress != patientWalletAddress) revert MedicalPrescriptions__InvalidPatientWalletAddress();
+        if (patients[patientId].walletAddress != patientWalletAddress) {
+            revert MedicalPrescriptions__InvalidPatientWalletAddress();
+        }
 
         string memory doctorId = doctorAddresses[msg.sender];
 
@@ -215,7 +217,9 @@ contract MedicalPrescriptions {
         string memory patientId = patientAddresses[msg.sender];
 
         // Verificar se a prescrição pertence ao paciente
-        if (!patientPrescriptions[patientId][prescriptionId]) revert MedicalPrescriptions__PrescriptionDoesNotBelongToPatient();
+        if (!patientPrescriptions[patientId][prescriptionId]) {
+            revert MedicalPrescriptions__PrescriptionDoesNotBelongToPatient();
+        }
 
         // Dar acesso ao médico
         prescriptionAccess[prescriptionId][doctorCrm] = true;
@@ -273,7 +277,7 @@ contract MedicalPrescriptions {
      * @param _i Número a ser convertido
      */
     function uint2str(uint256 _i) private pure returns (string memory) {
-        uint256 div = 10; 
+        uint256 div = 10;
         if (_i == 0) {
             return "0";
         }

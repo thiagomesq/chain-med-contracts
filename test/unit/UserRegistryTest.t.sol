@@ -92,9 +92,8 @@ contract UserRegistryTest is Test {
 
     function testSetDPSManagerContractSuccess() public {
         // O setup já define o contrato, então precisamos de uma nova instância para testar
-        UserRegistry newRegistry = new UserRegistry(
-            config.callbackGasLimit, config.functionsRouter, config.subscriptionId, config.donId
-        );
+        UserRegistry newRegistry =
+            new UserRegistry(config.callbackGasLimit, config.functionsRouter, config.subscriptionId, config.donId);
         address dpsManagerAddress = address(dpsManager);
 
         vm.prank(address(this));
@@ -110,18 +109,16 @@ contract UserRegistryTest is Test {
     }
 
     function testRevertIfSetDPSManagerToZeroAddress() public {
-        UserRegistry newRegistry = new UserRegistry(
-            config.callbackGasLimit, config.functionsRouter, config.subscriptionId, config.donId
-        );
+        UserRegistry newRegistry =
+            new UserRegistry(config.callbackGasLimit, config.functionsRouter, config.subscriptionId, config.donId);
         vm.prank(address(this));
         vm.expectRevert(UserRegistry.UserRegistry__InvalidAddress.selector);
         newRegistry.setDPSManagerContract(address(0));
     }
 
     function testSetAutomationContractSuccess() public {
-        UserRegistry newRegistry = new UserRegistry(
-            config.callbackGasLimit, config.functionsRouter, config.subscriptionId, config.donId
-        );
+        UserRegistry newRegistry =
+            new UserRegistry(config.callbackGasLimit, config.functionsRouter, config.subscriptionId, config.donId);
         address automationAddress = address(chainMedAutomation);
 
         vm.prank(address(this));

@@ -104,7 +104,7 @@ contract ChainMedAutomation is AutomationCompatibleInterface, Ownable {
             }
         }
 
-        if (usersToDeactivateCount > 0 ) {
+        if (usersToDeactivateCount > 0) {
             upkeepNeeded = true;
 
             assembly {
@@ -129,8 +129,7 @@ contract ChainMedAutomation is AutomationCompatibleInterface, Ownable {
         if (msg.sender != s_automationForwarder) {
             revert ChainMedAutomation__InvalidForwarderAddress();
         }
-        (address[] memory usersToDeactivate) =
-            abi.decode(performData, (address[]));
+        (address[] memory usersToDeactivate) = abi.decode(performData, (address[]));
 
         if (usersToDeactivate.length == 0) {
             revert ChainMedAutomation__NoUpkeepNeeded();

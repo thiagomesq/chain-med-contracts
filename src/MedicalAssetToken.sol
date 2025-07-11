@@ -48,7 +48,10 @@ contract MedicalAssetToken is ERC721URIStorage, Ownable {
      * @param _userRegistryAddress Address of the deployed UserRegistry contract.
      * @param _dpsManagerAddress Address of the deployed DPSManager contract.
      */
-    constructor(address _userRegistryAddress, address _dpsManagerAddress) ERC721("ChainMed Medical Asset", "CMMA") Ownable(msg.sender) {
+    constructor(address _userRegistryAddress, address _dpsManagerAddress)
+        ERC721("ChainMed Medical Asset", "CMMA")
+        Ownable(msg.sender)
+    {
         i_userRegistry = UserRegistry(_userRegistryAddress);
         i_dpsManager = _dpsManagerAddress;
     }
@@ -107,10 +110,13 @@ contract MedicalAssetToken is ERC721URIStorage, Ownable {
      */
     function getTokenIdByHash(bytes32 hashDPS) external view onlyDPSManagerOrOwner returns (uint256) {
         if (_nextTokenId == 0) {
-             revert MedicalAssetToken__TokenIdDoesNotExist();
+            revert MedicalAssetToken__TokenIdDoesNotExist();
         }
         uint256 tokenId = hashToTokenId[hashDPS];
-        if (tokenId == 0 && keccak256(abi.encodePacked(assetToDataRecordHash[0])) != keccak256(abi.encodePacked(hashDPS))) {
+        if (
+            tokenId == 0
+                && keccak256(abi.encodePacked(assetToDataRecordHash[0])) != keccak256(abi.encodePacked(hashDPS))
+        ) {
             revert MedicalAssetToken__TokenIdNotFound();
         }
         return tokenId;

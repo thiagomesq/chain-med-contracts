@@ -2,19 +2,25 @@
 
 pragma solidity 0.8.29;
 
-import { Script } from "forge-std/Script.sol";
-import { UserRegistry } from "src/UserRegistry.sol";
-import { DPSManager } from "src/DPSManager.sol";
-import { ChainMedAutomation } from "src/ChainMedAutomation.sol";
-import { MedicalAssetToken } from "src/MedicalAssetToken.sol";
-import { HelperConfig } from "script/HelperConfig.s.sol";
+import {Script} from "forge-std/Script.sol";
+import {UserRegistry} from "src/UserRegistry.sol";
+import {DPSManager} from "src/DPSManager.sol";
+import {ChainMedAutomation} from "src/ChainMedAutomation.sol";
+import {MedicalAssetToken} from "src/MedicalAssetToken.sol";
+import {HelperConfig} from "script/HelperConfig.s.sol";
 
 contract DeployChainMedDPS is Script {
-    function run() external returns (UserRegistry, DPSManager, ChainMedAutomation, MedicalAssetToken, HelperConfig.NetworkConfig memory) {
+    function run()
+        external
+        returns (UserRegistry, DPSManager, ChainMedAutomation, MedicalAssetToken, HelperConfig.NetworkConfig memory)
+    {
         return DeployContracts();
     }
 
-    function DeployContracts() public returns (UserRegistry, DPSManager, ChainMedAutomation, MedicalAssetToken, HelperConfig.NetworkConfig memory) {
+    function DeployContracts()
+        public
+        returns (UserRegistry, DPSManager, ChainMedAutomation, MedicalAssetToken, HelperConfig.NetworkConfig memory)
+    {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
 
@@ -27,9 +33,7 @@ contract DeployChainMedDPS is Script {
             _donId: config.donId
         });
 
-        DPSManager dpsManager = new DPSManager({
-            _userRegistryAddress: address(userRegistry)
-        });
+        DPSManager dpsManager = new DPSManager({_userRegistryAddress: address(userRegistry)});
 
         ChainMedAutomation chainMedAutomation = new ChainMedAutomation({
             _userRegistryAddress: address(userRegistry),
@@ -42,19 +46,13 @@ contract DeployChainMedDPS is Script {
         });
 
         // Set the DPSManager in UserRegistry
-        userRegistry.setDPSManagerContract({
-            _dpsManagerAddress: address(dpsManager)
-        });
+        userRegistry.setDPSManagerContract({_dpsManagerAddress: address(dpsManager)});
 
         // Set the Automation contract in UserRegistry
-        userRegistry.setAutomationContract({
-            _automationAddress: address(chainMedAutomation)
-        });
+        userRegistry.setAutomationContract({_automationAddress: address(chainMedAutomation)});
 
         // Set the MedicalAssetToken in DPSManager
-        dpsManager.setMedicalAssetToken({
-            _medicalAssetTokenAddress: address(medicalAssetToken)
-        });
+        dpsManager.setMedicalAssetToken({_medicalAssetTokenAddress: address(medicalAssetToken)});
 
         vm.stopBroadcast();
 

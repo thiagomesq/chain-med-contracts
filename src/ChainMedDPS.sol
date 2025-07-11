@@ -8,7 +8,6 @@ import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/Fu
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
-
 /**
  * @title ChainMedDPS - Anti-Fraud System
  * @dev Smart Contract optimized to prevent DPS fraud
@@ -63,7 +62,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         uint256 registrationDate;
         uint256[] dpsIds;
     }
-    
+
     // DPS structure
     struct DPS {
         uint256 id;
@@ -75,7 +74,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         bool active;
         uint256 totalPositiveResponses;
     }
-    
+
     // Insurance company structure
     struct Insurance {
         string name;
@@ -101,7 +100,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
     mapping(string => address) private s_cpfHashToAddress;
     mapping(string => uint256[]) private s_hashToDPS;
     mapping(address => uint256[]) private s_addressToDPS;
-    
+
     // Arrays for iteration
     address[] private s_usersList;
     address[] private s_insurancesList;
@@ -130,7 +129,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         address indexed responsible,
         uint256 timestamp
     );
-    
+
     event DPSRegistered(
         uint256 indexed dpsId,
         address indexed user,
@@ -139,21 +138,11 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         uint256 positiveResponses,
         uint256 timestamp
     );
-    
-    event QueryPerformed(
-        address indexed insurance,
-        address indexed queriedUser,
-        string queryType,
-        uint256 timestamp
-    );
-    
-    event InsuranceAuthorized(
-        address indexed insurance,
-        string name,
-        string cnpj,
-        uint256 timestamp
-    );
-    
+
+    event QueryPerformed(address indexed insurance, address indexed queriedUser, string queryType, uint256 timestamp);
+
+    event InsuranceAuthorized(address indexed insurance, string name, string cnpj, uint256 timestamp);
+
     event UserRegistrationRequested(bytes32 indexed requestId, address requester, string userHash);
     event InsuranceVerificationRequested(bytes32 indexed requestId, address insurance, string cnpj);
 
@@ -168,26 +157,25 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         }
         _;
     }
-    
+
     modifier onlyAuthorizedInsurance() {
         if (!s_insurances[msg.sender].authorized) {
             revert ChainMedDPS__InsuranceNotAuthorized();
         }
         _;
     }
-    
+
     modifier dpsExists(uint256 _dpsId) {
         if (_dpsId > s_dpsCounter) {
             revert ChainMedDPS__DPSNotFound();
         }
         _;
     }
-    
-    constructor(
-        address _functionsRouter,
-        uint64 _subscriptionId,
-        uint256 _updateInterval
-    ) Ownable(msg.sender) FunctionsClient(_functionsRouter) {
+
+    constructor(address _functionsRouter, uint64 _subscriptionId, uint256 _updateInterval)
+        Ownable(msg.sender)
+        FunctionsClient(_functionsRouter)
+    {
         s_dpsCounter = 0;
         i_functionsRouter = _functionsRouter;
         i_subscriptionId = _subscriptionId;
@@ -224,12 +212,8 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         bytes32 requestId = _sendRequest(req.encodeCBOR(), i_subscriptionId, 3e5, bytes32(0));
 
         s_requestTypes[requestId] = RequestType.USER_REGISTRATION;
-        s_userRegistrationRequests[requestId] = PendingUserRegistration({
-            requester: msg.sender,
-            name: _name,
-            cpfHash: cpfHash,
-            userHash: _userHash
-        });
+        s_userRegistrationRequests[requestId] =
+            PendingUserRegistration({requester: msg.sender, name: _name, cpfHash: cpfHash, userHash: _userHash});
 
         emit UserRegistrationRequested(requestId, msg.sender, _userHash);
     }
@@ -240,11 +224,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
      * @param _cnpj The raw CNPJ string for off-chain verification.
      * @param _source The JavaScript source code for the Chainlink Function.
      */
-    function requestInsuranceAuthorization(
-        string memory _name,
-        string memory _cnpj,
-        string memory _source
-    ) external {
+    function requestInsuranceAuthorization(string memory _name, string memory _cnpj, string memory _source) external {
         if (bytes(_name).length == 0) revert ChainMedDPS__NameCannotBeEmpty();
         if (s_insurances[msg.sender].authorized) revert ChainMedDPS__InsuranceAlreadyAuthorized();
 
@@ -257,11 +237,8 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         bytes32 requestId = _sendRequest(req.encodeCBOR(), i_subscriptionId, 300000, bytes32(0));
 
         s_requestTypes[requestId] = RequestType.INSURANCE_AUTHORIZATION;
-        s_insuranceAuthRequests[requestId] = PendingInsuranceAuthorization({
-            insuranceAddress: msg.sender,
-            name: _name,
-            cnpj: _cnpj
-        });
+        s_insuranceAuthRequests[requestId] =
+            PendingInsuranceAuthorization({insuranceAddress: msg.sender, name: _name, cnpj: _cnpj});
 
         emit InsuranceVerificationRequested(requestId, msg.sender, _cnpj);
     }
@@ -269,11 +246,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
     /**
      * @dev Callback function for Chainlink Functions
      */
-    function fulfillRequest(
-        bytes32 _requestId,
-        bytes memory _response,
-        bytes memory _err
-    ) internal override {
+    function fulfillRequest(bytes32 _requestId, bytes memory _response, bytes memory _err) internal override {
         if (_err.length > 0) {
             lastError = _err;
         } else {
@@ -297,7 +270,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
 
     function _completeUserRegistration(bytes32 _requestId) private {
         PendingUserRegistration memory pendingUser = s_userRegistrationRequests[_requestId];
-        
+
         s_users[pendingUser.requester] = User({
             name: pendingUser.name,
             cpfHash: pendingUser.cpfHash,
@@ -308,12 +281,14 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             registrationDate: block.timestamp,
             dpsIds: new uint256[](0)
         });
-        
+
         s_hashToAddress[pendingUser.userHash] = pendingUser.requester;
         s_cpfHashToAddress[pendingUser.cpfHash] = pendingUser.requester;
         s_usersList.push(pendingUser.requester);
-        
-        emit UserRegistered(pendingUser.requester, pendingUser.userHash, pendingUser.name, false, address(0), block.timestamp);
+
+        emit UserRegistered(
+            pendingUser.requester, pendingUser.userHash, pendingUser.name, false, address(0), block.timestamp
+        );
     }
 
     function _completeInsuranceAuthorization(bytes32 _requestId) private {
@@ -325,7 +300,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             registrationDate: block.timestamp,
             queriesPerformed: 0
         });
-        
+
         s_insurancesList.push(pendingAuth.insuranceAddress);
         emit InsuranceAuthorized(pendingAuth.insuranceAddress, pendingAuth.name, pendingAuth.cnpj, block.timestamp);
     }
@@ -338,11 +313,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
     /**
      * @dev Register main user
      */
-    function registerMainUser(
-        string memory _name,
-        string memory _cpfHash,
-        string memory _userHash
-    ) external {
+    function registerMainUser(string memory _name, string memory _cpfHash, string memory _userHash) external {
         if (bytes(_name).length == 0) {
             revert ChainMedDPS__NameCannotBeEmpty();
         }
@@ -355,7 +326,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         if (s_cpfHashToAddress[_cpfHash] != address(0)) {
             revert ChainMedDPS__CPFAlreadyRegistered();
         }
-        
+
         s_users[msg.sender] = User({
             name: _name,
             cpfHash: _cpfHash,
@@ -366,14 +337,14 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             registrationDate: block.timestamp,
             dpsIds: new uint256[](0)
         });
-        
+
         s_hashToAddress[_userHash] = msg.sender;
         s_cpfHashToAddress[_cpfHash] = msg.sender;
         s_usersList.push(msg.sender);
-        
+
         emit UserRegistered(msg.sender, _userHash, _name, false, address(0), block.timestamp);
     }
-    
+
     /**
      * @dev Register DPS
      */
@@ -389,9 +360,9 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
         if (_userDPS != msg.sender && s_users[_userDPS].responsible != msg.sender) {
             revert ChainMedDPS__NoPermissionToRegisterDPS();
         }
-        
+
         uint256 dpsId = s_dpsCounter;
-        
+
         s_dpsRegistry[dpsId] = DPS({
             id: dpsId,
             user: _userDPS,
@@ -402,60 +373,56 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             active: true,
             totalPositiveResponses: _positiveResponses
         });
-        
+
         s_users[_userDPS].dpsIds.push(dpsId);
         s_hashToDPS[s_users[_userDPS].userHash].push(dpsId);
         s_addressToDPS[_userDPS].push(dpsId);
-        
+
         s_dpsCounter++;
-        
+
         emit DPSRegistered(dpsId, _userDPS, msg.sender, _hashDPS, _positiveResponses, block.timestamp);
     }
-    
+
     /**
      * @dev Query DPS by hash (insurance companies)
      */
-    function queryDPSByHash(
-        string memory _userHash
-    ) external onlyAuthorizedInsurance returns (uint256[] memory) {
+    function queryDPSByHash(string memory _userHash) external onlyAuthorizedInsurance returns (uint256[] memory) {
         address userAddress = s_hashToAddress[_userHash];
         if (userAddress == address(0)) {
             revert ChainMedDPS__UserNotFound();
         }
-        
+
         s_insurances[msg.sender].queriesPerformed++;
-        
+
         emit QueryPerformed(msg.sender, userAddress, "hash", block.timestamp);
-        
+
         return s_hashToDPS[_userHash];
     }
-    
+
     /**
      * @dev Query DPS by CPF (insurance companies)
      */
-    function queryDPSByCPF(
-        string memory _cpfHash
-    ) external onlyAuthorizedInsurance returns (uint256[] memory) {
+    function queryDPSByCPF(string memory _cpfHash) external onlyAuthorizedInsurance returns (uint256[] memory) {
         address userAddress = s_cpfHashToAddress[_cpfHash];
         if (userAddress == address(0)) {
             revert ChainMedDPS__UserNotFound();
         }
-        
+
         s_insurances[msg.sender].queriesPerformed++;
-        
+
         emit QueryPerformed(msg.sender, userAddress, "cpf", block.timestamp);
-        
+
         return s_addressToDPS[userAddress];
     }
-    
+
     /**
      * @dev Get DPS details
      */
-    function getDPS(uint256 _dpsId) 
-        external 
-        view 
-        onlyAuthorizedInsurance 
-        dpsExists(_dpsId) 
+    function getDPS(uint256 _dpsId)
+        external
+        view
+        onlyAuthorizedInsurance
+        dpsExists(_dpsId)
         returns (
             uint256 id,
             address user,
@@ -465,7 +432,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             uint256 timestamp,
             bool active,
             uint256 positiveResponses
-        ) 
+        )
     {
         DPS memory dps = s_dpsRegistry[_dpsId];
         return (
@@ -479,19 +446,15 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             dps.totalPositiveResponses
         );
     }
-    
+
     /**
      * @dev Authorize insurance company (owner only)
      */
-    function authorizeInsurance(
-        address _insurance,
-        string memory _name,
-        string memory _cnpj
-    ) external onlyOwner {
+    function authorizeInsurance(address _insurance, string memory _name, string memory _cnpj) external onlyOwner {
         if (_insurance == address(0)) {
             revert ChainMedDPS__InvalidAddress();
         }
-        
+
         s_insurances[_insurance] = Insurance({
             name: _name,
             cnpj: _cnpj,
@@ -499,44 +462,36 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
             registrationDate: block.timestamp,
             queriesPerformed: 0
         });
-        
+
         s_insurancesList.push(_insurance);
-        
+
         emit InsuranceAuthorized(_insurance, _name, _cnpj, block.timestamp);
     }
-    
+
     /**
      * @dev Check if user exists by hash
      */
     function userExistsByHash(string memory _userHash) external view returns (bool) {
         return s_hashToAddress[_userHash] != address(0);
     }
-    
+
     /**
      * @dev Check if user exists by CPF
      */
     function userExistsByCPF(string memory _cpfHash) external view returns (bool) {
         return s_cpfHashToAddress[_cpfHash] != address(0);
     }
-    
+
     /**
      * @dev Get general statistics
      */
-    function getStatistics() 
-        external 
-        view 
-        onlyOwner 
-        returns (
-            uint256 totalUsers,
-            uint256 totalDPS,
-            uint256 totalInsurances
-        ) 
+    function getStatistics()
+        external
+        view
+        onlyOwner
+        returns (uint256 totalUsers, uint256 totalDPS, uint256 totalInsurances)
     {
-        return (
-            s_usersList.length,
-            s_dpsCounter,
-            s_insurancesList.length
-        );
+        return (s_usersList.length, s_dpsCounter, s_insurancesList.length);
     }
 
     /**
@@ -544,9 +499,12 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
      *      This function is called by the Chainlink Automation network to determine
      *      if performUpkeep should be executed.
      */
-    function checkUpkeep(
-        bytes memory /* checkData */
-    ) public view override returns (bool upkeepNeeded, bytes memory /* performData */) {
+    function checkUpkeep(bytes memory /* checkData */ )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */ )
+    {
         upkeepNeeded = (block.timestamp - s_lastTimestamp) > i_interval;
         // No performData is needed, so we return an empty bytes array.
     }
@@ -558,7 +516,7 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
      *      users, this could exceed the block gas limit. For production systems with
      *      thousands of users, consider a batch processing pattern.
      */
-    function performUpkeep(bytes calldata /* performData */) external override {
+    function performUpkeep(bytes calldata /* performData */ ) external override {
         // Re-check the condition to ensure it's still valid when performUpkeep is executed.
         if ((block.timestamp - s_lastTimestamp) > i_interval) {
             s_lastTimestamp = block.timestamp;
@@ -572,9 +530,8 @@ contract ChainMedDPS is Ownable, ReentrancyGuard, FunctionsClient, AutomationCom
                 // 1. Deactivate inactive users
                 // Condition: User is active, registered for over a year, and has no DPS records.
                 if (
-                    currentUser.active &&
-                    (block.timestamp - currentUser.registrationDate) > s_userInactivePeriod &&
-                    currentUser.dpsIds.length == 0
+                    currentUser.active && (block.timestamp - currentUser.registrationDate) > s_userInactivePeriod
+                        && currentUser.dpsIds.length == 0
                 ) {
                     s_users[userAddress].active = false;
                     emit UserDeactivated(userAddress);
