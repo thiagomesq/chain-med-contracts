@@ -51,7 +51,7 @@ contract DPSManager is ReentrancyGuard, Ownable {
     event DPSRegistered(
         uint256 indexed dpsId, address indexed responsible, bytes32 indexed hashDPS, string dataDPS, uint256 timestamp
     );
-    event DPSQueried(bytes32 indexed userHash, uint256 dpsCount);
+    event DPSQueried(bytes32 indexed userHash, address indexed insuranceAddress, uint256 timestamp);
     event MedicalAssetTokenSet(address indexed medicalAssetTokenAddress);
 
     /**
@@ -121,32 +121,13 @@ contract DPSManager is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Sets the MedicalAssetToken contract address.
-     * @dev This can only be called once by the owner and is required before any DPS can be registered.
-     * @param _medicalAssetTokenAddress The address of the deployed MedicalAssetToken contract.
-     */
-    function setMedicalAssetToken(address _medicalAssetTokenAddress) external nonReentrant onlyOwner {
-        if (address(s_medicalAssetToken) != address(0)) revert DPSManager__MedicalAssetTokenAlreadySet();
-        if (_medicalAssetTokenAddress == address(0)) revert DPSManager__InvalidAddress();
-        s_medicalAssetToken = MedicalAssetToken(_medicalAssetTokenAddress);
-        emit MedicalAssetTokenSet(_medicalAssetTokenAddress);
-    }
-
-    // --- View Functions ---
-
-    /**
      * @notice Allows an authorized insurance company to query for all DPS records associated with a user hash.
      * @dev Returns all historical DPS records for the user, as they are permanent and always queriable by design.
      * @param _userHash The unique keccak256 hash of the user (responsible or dependent) to query.
      * @return dpsRecords An array of all associated DPS structs.
      * @return dpsDatas An array of corresponding token URIs (Base64 data).
      */
-    function queryDPS(bytes32 _userHash)
-        external
-        view
-        onlyAuthorizedInsurance
-        returns (DPS[] memory, string[] memory)
-    {
+    function queryDPS(bytes32 _userHash) external onlyAuthorizedInsurance returns (DPS[] memory, string[] memory) {
         if (!_checkUserIsActive(_userHash)) revert DPSManager__UserNotActive();
         uint256[] storage dpsIds = s_userHashToDPS[_userHash];
         uint256 dpsCount = dpsIds.length;
@@ -160,8 +141,23 @@ contract DPSManager is ReentrancyGuard, Ownable {
             dpsDatas[i] = _getTokenDataFromHash(dps.hashDPS);
         }
 
+        emit DPSQueried(_userHash, msg.sender, block.timestamp);
         return (dpsRecords, dpsDatas);
     }
+
+    /**
+     * @notice Sets the MedicalAssetToken contract address.
+     * @dev This can only be called once by the owner and is required before any DPS can be registered.
+     * @param _medicalAssetTokenAddress The address of the deployed MedicalAssetToken contract.
+     */
+    function setMedicalAssetToken(address _medicalAssetTokenAddress) external nonReentrant onlyOwner {
+        if (address(s_medicalAssetToken) != address(0)) revert DPSManager__MedicalAssetTokenAlreadySet();
+        if (_medicalAssetTokenAddress == address(0)) revert DPSManager__InvalidAddress();
+        s_medicalAssetToken = MedicalAssetToken(_medicalAssetTokenAddress);
+        emit MedicalAssetTokenSet(_medicalAssetTokenAddress);
+    }
+
+    // --- View Functions ---
 
     /**
      * @notice Returns the total number of DPS records ever registered.
