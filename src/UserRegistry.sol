@@ -27,7 +27,6 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
     error UserRegistry__DPSManagerAlreadySet();
     error UserRegistry__DPSManagerNotSet();
     error UserRegistry__CallerNotDPSManager();
-    error UserRegistry__AutomationAlreadySet();
     error UserRegistry__AutomationNotSet();
     error UserRegistry__CallerNotAutomation();
 
@@ -239,7 +238,6 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
      * @param _automationAddress The address of the deployed Automation contract.
      */
     function setAutomationContract(address _automationAddress) external nonReentrant onlyOwner {
-        if (s_automationContract != address(0)) revert UserRegistry__AutomationAlreadySet();
         if (_automationAddress == address(0)) revert UserRegistry__InvalidAddress();
         s_automationContract = _automationAddress;
         emit AutomationContractSet(_automationAddress);
@@ -278,11 +276,21 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
     }
 
     /**
-     * @notice Returns the list of all registered user addresses.
+     * @notice Returns the list of active user addresses.
      * @return An array of user addresses.
      */
     function getUserList() external view returns (address[] memory) {
-        return s_usersList;
+        uint256 userCount = getUserCount();
+        address[] memory activeUsers = new address[](userCount);
+        uint256 index = 0;
+        uint256 totalUsers = s_usersList.length;
+        for (uint256 i = 0; i < totalUsers; i++) {
+            if (s_users[s_usersList[i]].active) {
+                activeUsers[index] = s_usersList[i];
+                index++;
+            }
+        }
+        return activeUsers;
     }
 
     /**
@@ -291,14 +299,6 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
      */
     function getInsuranceList() external view returns (address[] memory) {
         return s_insurancesList;
-    }
-
-    /**
-     * @notice Returns the total number of registered users.
-     * @return The number of registered users.
-     */
-    function getUserCount() external view returns (uint256) {
-        return s_usersList.length;
     }
 
     /**
@@ -349,6 +349,22 @@ contract UserRegistry is Ownable, FunctionsClient, ReentrancyGuard {
         address userAddress = s_userHashToAddress[_userHash];
         if (userAddress == address(0)) revert UserRegistry__InvalidAddress();
         return userAddress;
+    }
+
+    /**
+     * @notice Returns the number of active users.
+     * @dev Iterates through the user list and counts only the users marked as active.
+     * @return The total count of active users.
+     */
+    function getUserCount() public view returns (uint256) {
+        uint256 activeUserCount = 0;
+        uint256 totalUsers = s_usersList.length;
+        for (uint256 i = 0; i < totalUsers; i++) {
+            if (s_users[s_usersList[i]].active) {
+                activeUserCount++;
+            }
+        }
+        return activeUserCount;
     }
 
     // --- Internal Helpers ---

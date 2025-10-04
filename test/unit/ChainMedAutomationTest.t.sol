@@ -60,7 +60,7 @@ contract ChainMedAutomationTest is Test {
         emit ChainMedAutomation.UserBatchSizeSet(50);
         chainMedAutomation.setUserBatchSize(50);
 
-        assertEq(chainMedAutomation.s_userBatchSize(), 50);
+        assertEq(chainMedAutomation.getUserBatchSize(), 50);
     }
 
     function testRevertIfSetBatchSizeToZero() public {

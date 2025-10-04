@@ -9,7 +9,7 @@ import {MedicalAssetToken} from "./MedicalAssetToken.sol";
 /**
  * @title DPSManager
  * @author ChainMed Team
- * @notice Manages the creation and querying of Data Privacy Statements (DPS).
+ * @notice Manages the creation and querying of "Declaração Pessoal de Saúde" (DPS).
  * @dev This contract is responsible for storing the on-chain data related to a real-world asset (DPS).
  *      It orchestrates the process by first registering the data and then calling the MedicalAssetToken
  *      contract to mint the corresponding non-transferable token (NFT).
@@ -123,6 +123,7 @@ contract DPSManager is ReentrancyGuard, Ownable {
     /**
      * @notice Allows an authorized insurance company to query for all DPS records associated with a user hash.
      * @dev Returns all historical DPS records for the user, as they are permanent and always queriable by design.
+     *      Returns empty arrays if the user has no associated DPS records.
      * @param _userHash The unique keccak256 hash of the user (responsible or dependent) to query.
      * @return dpsRecords An array of all associated DPS structs.
      * @return dpsDatas An array of corresponding token URIs (Base64 data).

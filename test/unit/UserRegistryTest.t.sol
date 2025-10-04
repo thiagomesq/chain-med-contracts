@@ -127,12 +127,6 @@ contract UserRegistryTest is Test {
         newRegistry.setAutomationContract(automationAddress);
     }
 
-    function testRevertIfSetAutomationAlreadySet() public {
-        vm.prank(owner);
-        vm.expectRevert(UserRegistry.UserRegistry__AutomationAlreadySet.selector);
-        userRegistry.setAutomationContract(address(0x123));
-    }
-
     // ////////////////////////////////////
     // Testes de Desativação de Usuário  //
     // ////////////////////////////////////

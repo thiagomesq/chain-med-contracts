@@ -9,10 +9,9 @@ import {UserRegistry} from "./UserRegistry.sol";
 /**
  * @title MedicalAssetToken
  * @author ChainMed Team
- * @notice Represents a real-world asset (DPS) as a non-transferable, permissioned ERC721 token (Soulbound Token).
- * @dev This token is minted by the DPSManager contract upon DPS registration. Transfers are disabled
- *      after minting to ensure the token remains with its original owner. Burning is allowed.
- *      Compatible with OpenZeppelin Contracts v5.x.
+ * @notice Represents a "Declaração Pessoal de Saúde" (DPS) as a non-transferable, non-burnable ERC721 token (Soulbound Token).
+ * @dev This token is minted by the DPSManager contract upon DPS registration. Transfers and burning are disabled
+ *      after minting to ensure the token remains a permanent, unchangeable record linked to its original owner.
  */
 contract MedicalAssetToken is ERC721URIStorage, Ownable {
     // Custom Errors
@@ -76,8 +75,8 @@ contract MedicalAssetToken is ERC721URIStorage, Ownable {
     /**
      * @notice Overrides the internal _update function to make the token non-transferable and non-burnable (Soulbound).
      * @dev This is the standard hook for customizing transfers in OpenZeppelin v5.x.
-     *      - Minting is allowed to authorized users.
-     *      - Burning is allowed by the owner.
+     *      - Minting is allowed via the safeMint function.
+     *      - Burning (transfer to address(0)) is explicitly disabled.
      *      - Standard transfers between two non-zero addresses are disabled.
      */
     function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
